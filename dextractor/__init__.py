@@ -2,7 +2,12 @@ import re
 import os
 
 def analyze(path):
-    if isinstance(path, str):
-        return True
-    if isinstance(path, list):
-        return False
+    if os.path.isdir(path):  
+        print("\nIt is a directory")
+        return "Directory!"
+    elif os.path.isfile(path):  
+        print("\nIt is a normal file")  
+        return "File!"
+    else:  
+        print("It is a special file (socket, FIFO, device file)" )
+        return "Wrong!"
