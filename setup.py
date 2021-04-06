@@ -15,7 +15,7 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
-    name="dependency-extractor",
+    name="dextractor",
     version="1.0.0",
     description="A Python library which extracts library dependencies from source files written in most mainstream programming languages.",
     long_description=long_description,
