@@ -11,11 +11,11 @@ import re
 
 # Define supported languages with their corresponding compiled import regex.
 known_expressions = {
-    ".cpp": re.compile(r"#include [<\"](?P<dependency>[a-z]+)[\">]"),
+    ".cpp": re.compile(r"#include [<\"](?P<dependency>[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+)[\">]"),
 }
 
 
-def analyze(any_path: str, max_file_size=10000000) -> Set:
+def analyze(any_path: str, max_file_size=5000000) -> Set:
     """
     Retrieve any path and analyze its source file content for library dependencies.
     """
@@ -32,15 +32,19 @@ def analyze(any_path: str, max_file_size=10000000) -> Set:
             # 1.1. When file isn't too large.
             # -----
             # NOTE: Most source files for most use cases are not
-            #       expected to exceed 10MB in size.
+            #       expected to exceed 5MB in size (editable in).
             if os.stat(file_path).st_size < max_file_size:
                 try:
+                    # 1.1.1. Open file for reading.
                     file = open(file_path, "r")
+                    print(f"-- [dextractor] INFORMATION: Opened a {extension} file.\n")
 
-                    # TODO: Implement regex scan.
-                    matches = known_expressions[extension].match(file.read())
-                    found.add(matches.group("dependency"))
-
+                    # 1.1.2. Match regex and obtain named capture group.
+                    matches = known_expressions[extension].findall(file.read())
+                    found.update(matches)
+                    print(f"found these: {found}")
+                    
+                    # 1.1.3. Close file for memory optimisation.
                     file.close()
                 except IOError:
                     print(
