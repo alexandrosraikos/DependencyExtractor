@@ -1,28 +1,38 @@
+# ---------
+# This testing file is part of the Dependency Extractor python package.
+# Copyright (c) 2021, Alexandros Raikos tou Konstantinou.
+#
+# Licensed under the MIT License.
+# ---------
+
 import unittest
 import os
 
 from dextractor import analyze
 
-if (os.getcwd().endswith("dependency-extractor") == False):
-    raise Exception("Please launch the script from the root directory of the package.")
-else:
-    print("\nTesting sequence launched from: "+ os.getcwd()+"\n")
+if os.getcwd().endswith("dependency-extractor") == False:
+    raise Exception(
+        """
+            -------------------- ERROR --------------------
+            Please launch the script from the root directory 
+            of the dextractor package.
+            -----------------------------------------------
+        """
+    )
 
-class TestAnalysis(unittest.TestCase):
+
+class LanguageTest(unittest.TestCase):
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
-    def test_single_file(self):
+    def test_data_analysis(self):
         """
-        Test using a singular file.
+        Test using the data directory.
         """
-        filePath = "/tests/data/cpp/main.cpp"
-        self.assertEqual("File!", analyze(os.getcwd()+filePath))
-    def test_directory(self):
-        """
-        Test using a directory path.
-        """
-        directoryPath = "/tests/data/cpp"
-        self.assertEqual("Directory!", analyze(os.getcwd()+directoryPath))
+        print(analyze(os.getcwd() + "/tests"))
+        # self.assertSetEqual(
+        #     {"iostream", "tuple"}, analyze(os.getcwd() + "/tests/data/cpp")
+        # )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
