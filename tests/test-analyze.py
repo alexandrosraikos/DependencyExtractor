@@ -7,6 +7,7 @@
 
 import unittest
 import os
+from pprint import pprint
 
 from dextractor import analyze
 
@@ -28,10 +29,7 @@ class LanguageTest(unittest.TestCase):
         """
         Test using the data directory.
         """
-        print(analyze(os.getcwd() + "/tests/data"))
-        # self.assertSetEqual(
-        #     {"iostream", "tuple"}, analyze(os.getcwd() + "/tests/data/cpp")
-        # )
+        pprint(analyze(os.getcwd() + "/tests/data"))
 
 
 if __name__ == "__main__":
