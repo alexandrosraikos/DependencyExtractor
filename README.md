@@ -12,4 +12,4 @@ To run unit tests using `unittest` on package modules, simply run:
 
 `python -m unittest tests/test-analyze.py`
 
-Please note that sample files from various programming languages in the `tests/data` directory will be used.
+Please note that sample files from various programming languages in the `tests/data` directory will be used. These sample files contain simple applications.
