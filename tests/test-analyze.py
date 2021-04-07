@@ -28,7 +28,7 @@ class LanguageTest(unittest.TestCase):
         """
         Test using the data directory.
         """
-        print(analyze(os.getcwd() + "/tests"))
+        print(analyze(os.getcwd() + "/tests/data"))
         # self.assertSetEqual(
         #     {"iostream", "tuple"}, analyze(os.getcwd() + "/tests/data/cpp")
         # )
