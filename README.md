@@ -2,7 +2,26 @@
 
 A Python library which extracts library dependencies from source files written in most mainstream programming languages.
 
-## Usage
+## Getting started
+
+Follow the steps below to get started with `dextractor`.
+
+### Installation
+
+This package can be install easily via `pip`. Run the commands below:
+
+```bash
+# Clone or download the .zip from the Releases tab.
+git clone https://www.github.com/alexandrosraikos/dependency-extractor
+
+# Navigate to the folder.
+cd dependency-extractor
+
+# Install locally
+pip install .
+```
+
+### Usage
 
 It is meant to be imported and called via a single module, which returns a `Set` of dependencies given a single file or a directory.
 
