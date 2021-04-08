@@ -75,7 +75,7 @@ known_expressions = {
 def analyse(
     any_path: str,
     max_file_size=5000000,
-    exclude_internal_references=False,
+    strict=False,
     verbose=False,
 ) -> Set:
     """
@@ -88,7 +88,7 @@ def analyse(
     - `max_file_size : int`
         A integer indicating the byte limit of source files to be read.
         This is useful for directories were irrelevant large data sets are also included.
-    - `exclude_internal_references : bool`
+    - `strict : bool`
         A flag which excludes internal and relative packages.
     - `verbose : bool`
         Enables verbose output for each scanned file.
@@ -109,7 +109,7 @@ def analyse(
         # 0. Initialize empty set of discovered dependencies.
         found = set()
         nonlocal coverage_counter
-        nonlocal exclude_internal_references
+        nonlocal strict
         nonlocal verbose
 
         # 1. When file is written in a supported language.
@@ -129,7 +129,7 @@ def analyse(
                         print(f"Reading {os.path.basename(file.name)}")
 
                     # 1.1.2. Match regex and obtain named capture group.
-                    if exclude_internal_references:
+                    if strict:
                         query = known_expressions[extension + "-strict"]
                     else:
                         query = known_expressions[extension]
