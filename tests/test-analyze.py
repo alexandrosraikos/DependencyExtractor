@@ -29,7 +29,7 @@ class LanguageTest(unittest.TestCase):
         """
         Test using the data directory.
         """
-        pprint(analyze(os.getcwd() + "/tests/data",5000000,True))
+        pprint(analyze(os.getcwd() + "/tests/data",5000000,True,True))
 
 
 if __name__ == "__main__":
