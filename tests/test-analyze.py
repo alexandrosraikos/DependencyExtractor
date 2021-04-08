@@ -29,7 +29,11 @@ class LanguageTest(unittest.TestCase):
         """
         Test using the data directory.
         """
-        pprint(analyze(os.getcwd() + "/tests/data",5000000,True,True))
+        results = analyze(os.getcwd() + "/tests/data",5000000,True,True)
+        if not results:
+            print("\nNo results were returned.")
+        else:
+            pprint(results, compact=True)
 
 
 if __name__ == "__main__":
