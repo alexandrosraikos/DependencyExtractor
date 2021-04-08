@@ -9,22 +9,74 @@ from typing import Set
 import os
 import re
 
+# TODO: Add support for more mainstream languages.
+
 # Define supported languages with their corresponding compiled import regex.
+# -----
+# NOTE: Strict suffix queries exclude local and relative imports.
+# NOTE: These expressions were formulated with the help of https://regex101.com.
 known_expressions = {
-    ".cpp": re.compile(r"#include [<\"](?P<dependency>[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+)[\">]"),
+    # C and C++
+    ".cpp": re.compile(
+        r"#include [<\"](?P<dependency>[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+)[\">]"
+    ),
+    ".cpp-strict": re.compile(
+        r"#include [<\"](?P<dependency>[^.][a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+[^.hpp][^.h])[\">]"
+    ),
+    ".hpp": re.compile(
+        r"#include [<\"](?P<dependency>[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+)[\">]"
+    ),
+    ".hpp-strict": re.compile(
+        r"#include [<\"](?P<dependency>[^.][a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+[^.hpp][^.h])[\">]"
+    ),
+    ".c": re.compile(
+        r"#include [<\"](?P<dependency>[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+)[\">]"
+    ),
+    ".c-strict": re.compile(
+        r"#include [<\"](?P<dependency>[^.][a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+[^.hpp][^.h])[\">]"
+    ),
+    ".h": re.compile(
+        r"#include [<\"](?P<dependency>[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+)[\">]"
+    ),
+    ".h-strict": re.compile(
+        r"#include [<\"](?P<dependency>[^.][a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+[^.hpp][^.h])[\">]"
+    ),
 }
 
 
-def analyze(any_path: str, max_file_size=5000000) -> Set:
+def analyze(
+    any_path: str, max_file_size=5000000, exclude_internal_references=False, verbose=False
+) -> Set:
     """
-    Retrieve any path and analyze its source file content for library dependencies.
+    Retrieve any path and analyze all source file content for library dependencies.
+    
+    Parameters
+    ----------
+    - `any_path : str`
+        A string containing a valid system path which is accessible from this script.
+    - `max_file_size : int`
+        A integer indicating the byte limit of source files to be read. 
+        This is useful for directories were irrelevant large data sets are also included.
+    - `exclude_internal_references : bool`
+        A flag which excludes internal and relative packages.
+    - `verbose : bool`
+        Enables verbose output for each scanned file.
     """
 
+    # 0. Setup
+    # - 0.1. Directory coverage counter.
+    coverage_counter = 0
+
+    # - 0.2. Single file dependency analysis module.
     def find_in(file_path: str) -> Set:
         """
         Read the source file and extract imported package names using regular expressions.
         """
+        # 0. Initialize empty set of discovered dependencies.
         found = set()
+        nonlocal coverage_counter
+        nonlocal exclude_internal_references
+        nonlocal verbose
 
         # 1. When file is written in a supported language.
         filename, extension = os.path.splitext(file_path)
@@ -32,18 +84,27 @@ def analyze(any_path: str, max_file_size=5000000) -> Set:
             # 1.1. When file isn't too large.
             # -----
             # NOTE: Most source files for most use cases are not
-            #       expected to exceed 5MB in size (editable in).
+            #       expected to exceed 5MB in size (editable).
             if os.stat(file_path).st_size < max_file_size:
                 try:
                     # 1.1.1. Open file for reading.
                     file = open(file_path, "r")
-                    print(f"-- [dextractor] INFORMATION: Opened a {extension} file.\n")
+                    if verbose:
+                        print(f"-- [dextractor] INFORMATION: Opened a {extension} file.\n")
 
                     # 1.1.2. Match regex and obtain named capture group.
-                    matches = known_expressions[extension].findall(file.read())
+                    if exclude_internal_references:
+                        query = known_expressions[extension+"-strict"]
+                    else:
+                        query = known_expressions[extension]
+                    matches = query.findall(file.read())
                     found.update(matches)
-                    print(f"found these: {found}")
-                    
+
+                    if not found and verbose:
+                        print(
+                            f"INFORMATION: This {extension} file doesn't include any dependencies."
+                        )
+
                     # 1.1.3. Close file for memory optimisation.
                     file.close()
                 except IOError:
@@ -72,6 +133,8 @@ def analyze(any_path: str, max_file_size=5000000) -> Set:
                     -----------------------------------------------
                 """
             )
+        # 2. Increment directory coverage counter and return list of found dependencies.
+        coverage_counter += 1
         return found
 
     # 0. Initialise empty dependencies array.
@@ -79,9 +142,11 @@ def analyze(any_path: str, max_file_size=5000000) -> Set:
 
     # 1. Process given path.
     if os.path.isdir(any_path):
+        total_file_count = 0
         # 1.1. When the given path points to a directory,
         # recursively check the directory tree for all files.
         for root, _, files in os.walk(any_path):
+            # 1.1.1. Traverse all available files.
             for file in files:
                 try:
                     dependencies.update(find_in(os.path.join(root, file)))
@@ -95,6 +160,21 @@ def analyze(any_path: str, max_file_size=5000000) -> Set:
                     print(
                         f"-- [dextractor] ERROR: The file '{file}' could not be accessed."
                     )
+            # 1.1.2 Update total file count.
+            total_file_count += len(files)
+        # 1.1.3. Extract statistics.
+        if len(files) > 0 and coverage_counter > 0:
+            if (exclude_internal_references):
+                exclusion_information = "Internal dependencies were ignored."
+            print(
+                f"""
+                -------------------> SUCCESS <-------------------
+                {total_file_count} files under {round(max_file_size/1000000,1)}MB were detected and 
+                {coverage_counter} were successfully scanned. The directory 
+                scan covered {round(coverage_counter/total_file_count,2)}% of all discovered files.
+                -------------------------------------------------
+                """
+            )
 
     elif os.path.isfile(any_path):
         # 1.2. When the given path points to a single file.
