@@ -6,6 +6,8 @@
 # ---------
 
 from typing import Set
+import colorama
+from colorama import Fore, Back, Style
 import os
 import re
 
@@ -96,7 +98,10 @@ def analyze(
     # - 0.1. Directory coverage counter.
     coverage_counter = 0
 
-    # - 0.2. Single file dependency analysis module.
+    # - 0.2 Initialise colorama
+    colorama.init(autoreset=True)
+
+    # - 0.3. Single file dependency analysis module.
     def find_in(file_path: str) -> Set:
         """
         Read the source file and extract imported package names using regular expressions.
@@ -119,9 +124,9 @@ def analyze(
                     # 1.1.1. Open file for reading.
                     file = open(file_path, "r")
                     if verbose:
-                        print(
-                            f"-- [dextractor] INFORMATION: Opened a {extension} file.\n"
-                        )
+                        print("[dextractor]", end=" ")
+                        print(Fore.CYAN + "INFORMATION:", end=" ")
+                        print(f"Reading {os.path.basename(file.name)}")
 
                     # 1.1.2. Match regex and obtain named capture group.
                     if exclude_internal_references:
@@ -132,38 +137,21 @@ def analyze(
                     found.update(matches)
 
                     if not found and verbose:
-                        print(
-                            f"INFORMATION: This {extension} file doesn't include any dependencies."
-                        )
-
+                        print("[dextractor]", end=" ")
+                        print(Fore.CYAN + "INFORMATION:", end=" ")
+                        print("This file doesn't include any dependencies.")
                     # 1.1.3. Close file for memory optimisation.
                     file.close()
                 except IOError:
+                    print("[dextractor]", end=" ")
+                    print(Fore.RED + "ERROR:", end=" ")
                     print(
-                        f"""
-                        -------------------- ERROR --------------------
-                        There was an IO error when trying to access the
-                        file '{filename}'.
-                        -----------------------------------------------
-                        """
+                        f"There was an IO error when trying to access the file '{filename}'."
                     )
             else:
-                raise MemoryError(
-                    f"""
-                    -------------------- ERROR --------------------
-                    The file '{filename}' is too large.
-                    -----------------------------------------------
-                    """
-                )
+                raise MemoryError()
         else:
-            raise NotImplementedError(
-                """
-                    -------------------- ERROR --------------------
-                    This programming language is currently not 
-                    supported by this package.
-                    -----------------------------------------------
-                """
-            )
+            raise NotImplementedError()
         # 2. Increment directory coverage counter and return list of found dependencies.
         coverage_counter += 1
         return found
@@ -183,33 +171,34 @@ def analyze(
                     dependencies.update(find_in(os.path.join(root, file)))
                 except NotImplementedError:
                     if verbose:
-                        print(
-                            f"-- [dextractor] NOTICE: The file '{file}' is not yet supported by this module."
-                        )
+                        print("[dextractor]", end=" ")
+                        print(Fore.YELLOW + "NOTICE:", end=" ")
+                        print(f"The file '{file}' is not yet supported by this module.")
                 except MemoryError:
                     if verbose:
-                        print(
-                            f"-- [dextractor] NOTICE: The file '{file}' is too large."
-                        )
+                        print("[dextractor]", end=" ")
+                        print(Fore.YELLOW + "NOTICE:", end=" ")
+                        print(f"The file '{file}' is too large and will be ignored.")
                 except IOError:
+                    print("[dextractor]", end=" ")
+                    print(Fore.RED + "ERROR:", end=" ")
                     print(
-                        f"-- [dextractor] ERROR: The file '{file}' could not be accessed."
+                        f"The file '{file}' could not be accessed."
                     )
             # 1.1.2 Update total file count.
             total_file_count += len(files)
         # 1.1.3. Extract statistics.
         if len(files) > 0 and coverage_counter > 0:
-            if exclude_internal_references:
-                exclusion_information = "Internal dependencies were ignored."
+            print("[dextractor]", end=" ")
+            print(Fore.GREEN + "SUCCESS:")
             print(
                 f"""
-                -------------------> SUCCESS <-------------------
-                {total_file_count} files under {round(max_file_size/1000000,1)}MB were detected and 
-                {coverage_counter} were successfully scanned. The directory 
-                scan covered {round(coverage_counter/total_file_count,3)*100}% of all discovered files and 
-                has successfully exported {len(dependencies)} dependency
-                references.
-                -------------------------------------------------
+                 - - - - - - -
+                | Files detected under {round(max_file_size/1000000,1)}MB: {total_file_count}
+                | Files scanned: {coverage_counter}
+                | Scan coverage: {round(coverage_counter/total_file_count,3)*100}%
+                | Dependencies found: {len(dependencies)}
+                 - - - - - - -
                 """
             )
 
@@ -222,26 +211,23 @@ def analyze(
         try:
             dependencies = dependencies.union(find_in(any_path))
         except NotImplementedError:
-            print(
-                f"-- [dextractor] ERROR: The file '{filename}{extension}' is not yet supported by this module."
-            )
+                if verbose:
+                    print("[dextractor]", end=" ")
+                    print(Fore.YELLOW + "NOTICE:", end=" ")
+                    print(f"The file '{os.path.basename(filename)}{extension}' is not yet supported by this module.")
         except MemoryError:
-            print(
-                f"-- [dextractor] ERROR: The file '{filename}{extension}' is too large."
-            )
+                if verbose:
+                    print("[dextractor]", end=" ")
+                    print(Fore.RED + "ERROR:", end=" ")
+                    print(f"The file '{os.path.basename(filename)}{extension}' is too large.")
         except IOError:
-            print(
-                f"-- [dextractor] ERROR: The file '{filename}{extension}' could not be accessed."
-            )
+                if verbose:
+                    print("[dextractor]", end=" ")
+                    print(Fore.RED + "ERROR:", end=" ")
+                    print(f"The file '{os.path.basename(filename)}{extension}' could not be accessed.")
     else:
         raise Exception(
-            """
-            -------------------- ERROR --------------------
-            This is not a file or a directory. It might be 
-            a special file (e.g. socket, FIFO, device file), 
-            which is unsupported by this package.
-            -----------------------------------------------
-            """
+            "This is not a file or a directory. It might be a special file (e.g. socket, FIFO, device file), which is unsupported by this package. "
         )
 
     return dependencies
