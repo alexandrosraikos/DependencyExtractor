@@ -7,9 +7,9 @@ A Python library which extracts library dependencies from source files written i
 It is meant to be imported and called via a simple function, which returns an array of dependencies given a single file or a directory.
 
 ```python
-from dextractor import analyze
+from dextractor import analyse
 
-dependencies = analyze("path/to-a/repo")
+dependencies = analyse("path/to-a/repo")
 ```
 
 ## Unit testing

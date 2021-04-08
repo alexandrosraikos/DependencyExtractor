@@ -9,7 +9,7 @@ import unittest
 import os
 from pprint import pprint
 
-from dextractor import analyze
+from dextractor import analyse
 
 if os.getcwd().endswith("dependency-extractor") == False:
     raise Exception(
@@ -29,7 +29,7 @@ class LanguageTest(unittest.TestCase):
         """
         Test using the data directory.
         """
-        results = analyze(os.getcwd() + "/tests/data",5000000,True,True)
+        results = analyse(os.getcwd() + "/tests/data",5000000,True,True)
         if not results:
             print("\nNo results were returned.")
         else:

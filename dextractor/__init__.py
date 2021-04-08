@@ -72,14 +72,14 @@ known_expressions = {
 }
 
 
-def analyze(
+def analyse(
     any_path: str,
     max_file_size=5000000,
     exclude_internal_references=False,
     verbose=False,
 ) -> Set:
     """
-    Retrieve any path and analyze all source file content for library dependencies.
+    Retrieve any path and analyse all source file content for library dependencies.
 
     Parameters
     ----------
