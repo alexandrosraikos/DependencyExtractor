@@ -9,8 +9,6 @@ from typing import Set
 import os
 import re
 
-# TODO: Add support for more mainstream languages.
-
 # Define supported languages with their corresponding compiled import regex.
 # -----
 # NOTE: Strict suffix queries exclude local and relative imports.
@@ -41,21 +39,52 @@ known_expressions = {
     ".h-strict": re.compile(
         r"#include [<\"](?P<dependency>[^.][a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]+[^.hpp][^.h])[\">]"
     ),
+    # Golang
+    # TODO: #1 Needs improvement (it only reads last dependency in list + strict mode.)
+    ".go": re.compile(
+        r"import \(\n(?:\t\"(?P<dependency>[a-zA-Z0-9!@#$%^&*()_+\-\[\]{};':\"\\.\/?]+)\"[\n]+)+\)"
+    ),
+    ".go-strict": re.compile(
+        r"import \(\n(?:\t\"(?P<dependency>[a-zA-Z0-9!@#$%^&*()_+\-\[\]{};':\"\\.\/?]+)\"[\n]+)+\)"
+    ),
+    # Java
+    ".java": re.compile(
+        r"import (?P<dependency>[a-zA-Z0-9!@#$%^&*_+\-\[\]{};':\"\\.\/?]+);"
+    ),
+    ".java-strict": re.compile(
+        r"import (?P<dependency>[a-zA-Z0-9!@#$%^&*_+\-\[\]{};':\"\\.\/?]+);"
+    ),
+    # Python
+    ".py": re.compile(
+        r"^(?:[ ]|)+(?:import|from) (?P<dependency>[^_][a-zA-Z0-9!@#$%^&*()_+\-\[\]{}.;':\"\\\/?]+)"
+    ),
+    ".py-strict": re.compile(
+        r"^(?:[ ]|)+(?:import|from) (?P<dependency>[^_.][a-zA-Z0-9!@#$%^&*()_+\-\[\]{};':\"\\\/?]+)"
+    ),
+    ".pyi": re.compile(
+        r"^(?:[ ]|)+(?:import|from) (?P<dependency>[^_][a-zA-Z0-9!@#$%^&*()_+\-\[\]{}.;':\"\\\/?]+)"
+    ),
+    ".pyi-strict": re.compile(
+        r"^(?:[ ]|)+(?:import|from) (?P<dependency>[^_.][a-zA-Z0-9!@#$%^&*()_+\-\[\]{};':\"\\\/?]+)"
+    ),
 }
 
 
 def analyze(
-    any_path: str, max_file_size=5000000, exclude_internal_references=False, verbose=False
+    any_path: str,
+    max_file_size=5000000,
+    exclude_internal_references=False,
+    verbose=False,
 ) -> Set:
     """
     Retrieve any path and analyze all source file content for library dependencies.
-    
+
     Parameters
     ----------
     - `any_path : str`
         A string containing a valid system path which is accessible from this script.
     - `max_file_size : int`
-        A integer indicating the byte limit of source files to be read. 
+        A integer indicating the byte limit of source files to be read.
         This is useful for directories were irrelevant large data sets are also included.
     - `exclude_internal_references : bool`
         A flag which excludes internal and relative packages.
@@ -90,11 +119,13 @@ def analyze(
                     # 1.1.1. Open file for reading.
                     file = open(file_path, "r")
                     if verbose:
-                        print(f"-- [dextractor] INFORMATION: Opened a {extension} file.\n")
+                        print(
+                            f"-- [dextractor] INFORMATION: Opened a {extension} file.\n"
+                        )
 
                     # 1.1.2. Match regex and obtain named capture group.
                     if exclude_internal_references:
-                        query = known_expressions[extension+"-strict"]
+                        query = known_expressions[extension + "-strict"]
                     else:
                         query = known_expressions[extension]
                     matches = query.findall(file.read())
@@ -151,11 +182,15 @@ def analyze(
                 try:
                     dependencies.update(find_in(os.path.join(root, file)))
                 except NotImplementedError:
-                    print(
-                        f"-- [dextractor] NOTICE: The file '{file}' is not yet supported by this module."
-                    )
+                    if verbose:
+                        print(
+                            f"-- [dextractor] NOTICE: The file '{file}' is not yet supported by this module."
+                        )
                 except MemoryError:
-                    print(f"-- [dextractor] NOTICE: The file '{file}' is too large.")
+                    if verbose:
+                        print(
+                            f"-- [dextractor] NOTICE: The file '{file}' is too large."
+                        )
                 except IOError:
                     print(
                         f"-- [dextractor] ERROR: The file '{file}' could not be accessed."
@@ -164,14 +199,16 @@ def analyze(
             total_file_count += len(files)
         # 1.1.3. Extract statistics.
         if len(files) > 0 and coverage_counter > 0:
-            if (exclude_internal_references):
+            if exclude_internal_references:
                 exclusion_information = "Internal dependencies were ignored."
             print(
                 f"""
                 -------------------> SUCCESS <-------------------
                 {total_file_count} files under {round(max_file_size/1000000,1)}MB were detected and 
                 {coverage_counter} were successfully scanned. The directory 
-                scan covered {round(coverage_counter/total_file_count,2)}% of all discovered files.
+                scan covered {round(coverage_counter/total_file_count,3)*100}% of all discovered files and 
+                has successfully exported {len(dependencies)} dependency
+                references.
                 -------------------------------------------------
                 """
             )
