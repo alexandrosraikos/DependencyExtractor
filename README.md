@@ -8,7 +8,7 @@ Follow the steps below to get started with `dextractor`.
 
 ### Installation
 
-This package can be install easily via `pip`. Run the commands below:
+This package can be installed easily via `pip`. Run the commands below:
 
 ```bash
 # Clone or download the .zip from the Releases tab.
