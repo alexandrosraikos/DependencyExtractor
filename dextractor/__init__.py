@@ -11,7 +11,7 @@ from typing import Set
 
 # Third party deependencies.
 import colorama
-from colorama import Fore, Back, Style
+from colorama import Fore
 
 # Local dependencies.
 from .expressions import known
