@@ -15,6 +15,7 @@ from colorama import Fore
 
 # Local dependencies.
 from .expressions import known
+from .exclusions import ignored_files, ignored_extensions
 
 def analyse(
     any_path: str,
@@ -41,6 +42,7 @@ def analyse(
     # 0. Setup
     # - 0.1. Directory coverage counter.
     coverage_counter = 0
+    ignored_counter = 0
 
     # - 0.2 Initialise colorama
     colorama.init(autoreset=True)
@@ -53,6 +55,7 @@ def analyse(
         # 0. Initialize empty set of discovered dependencies.
         found = set()
         nonlocal coverage_counter
+        nonlocal ignored_counter
         nonlocal strict
         nonlocal verbose
 
@@ -94,6 +97,9 @@ def analyse(
                     )
             else:
                 raise MemoryError()
+        elif os.path.basename(filename) in ignored_files or extension in ignored_extensions:
+            ignored_counter += 1
+            raise TypeError()
         else:
             raise NotImplementedError()
         # 2. Increment directory coverage counter and return list of found dependencies.
@@ -113,6 +119,11 @@ def analyse(
             for file in files:
                 try:
                     dependencies.update(find_in(os.path.join(root, file)))
+                except TypeError:
+                    if verbose:
+                        print("[dextractor]", end=" ")
+                        print(Fore.YELLOW + "NOTICE:", end=" ")
+                        print(f"The file '{file}' is not a source file.")
                 except NotImplementedError:
                     if verbose:
                         print("[dextractor]", end=" ")
@@ -140,7 +151,9 @@ def analyse(
                  - - - - - - -
                 | Files detected under {round(max_file_size/1000000,1)}MB: {total_file_count}
                 | Files scanned: {coverage_counter}
-                | Scan coverage: {round(coverage_counter/total_file_count,3)*100}%
+                | Non-source files ignored: {ignored_counter}
+                | Unsupported files: {total_file_count-coverage_counter-ignored_counter}
+                | Source file coverage: {round(coverage_counter/(total_file_count-ignored_counter),3)*100}%
                 | Dependencies found: {len(dependencies)}
                  - - - - - - -
                 """
@@ -154,6 +167,11 @@ def analyse(
         filename, extension = os.path.splitext(any_path)
         try:
             dependencies = dependencies.union(find_in(any_path))
+        except TypeError:
+                if verbose:
+                    print("[dextractor]", end=" ")
+                    print(Fore.RED + "ERROR:", end=" ")
+                    print(f"The file '{os.path.basename(filename)}{extension}' is not a source file.")
         except NotImplementedError:
                 if verbose:
                     print("[dextractor]", end=" ")
