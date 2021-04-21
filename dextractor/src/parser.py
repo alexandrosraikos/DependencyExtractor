@@ -81,6 +81,4 @@ class SourceFile:
             print("[dextractor]", end=" ")
             print(Fore.RED + "ERROR:", end=" ")
             print(f"There was an IO error when trying to access the file '{name}'.")
-        else:
-            raise MemoryError()
         return found
