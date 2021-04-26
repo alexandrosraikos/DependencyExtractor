@@ -15,6 +15,8 @@ from colorama import Fore
 
 # Local dependencies.
 from .src.parser import SourceFile
+from .src.exclusions import ignored_files, ignored_extensions
+
 
 def analyse(
     any_path: str,
@@ -59,16 +61,22 @@ def analyse(
             for file in files:
                 try:
                     if os.stat(os.path.join(root, file)).st_size < max_file_size:
-                        source_file = SourceFile(os.path.join(root, file))
-                        dependencies.update(source_file.dependencies(verbose, strict))
-                        coverage_counter += 1
+                        if ((os.path.splitext(file)[0] not in ignored_files) and 
+                            (os.path.splitext(file)[1] not in ignored_extensions)):
+                            source_file = SourceFile(os.path.join(root, file))
+                            dependencies.update(
+                                source_file.dependencies(verbose, strict)
+                            )
+                            coverage_counter += 1
+                        else:
+                            raise TypeError
                     else:
                         raise MemoryError
                 except TypeError:
                     if verbose:
                         print("[dextractor]", end=" ")
                         print(Fore.YELLOW + "NOTICE:", end=" ")
-                        print(f"The file '{file}' is not a source file.")
+                        print(f"The file '{file}' does not contain source code.")
                 except NotImplementedError:
                     if verbose:
                         print("[dextractor]", end=" ")
