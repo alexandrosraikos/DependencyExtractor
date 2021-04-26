@@ -11,7 +11,6 @@ from os import name, path
 from typing import Set
 
 # Third party dependencies.
-import colorama
 from colorama import Fore
 
 # Local package dependencies.
@@ -64,7 +63,9 @@ class SourceFile:
                 print(f"Reading {os.path.basename(file.name)}")
 
             # 1.1.2. Match regex and obtain named capture group.
-            if strict and ("strict" in self.language.expressions["dependencies"].keys()):
+            if strict and (
+                "strict" in self.language.expressions["dependencies"].keys()
+            ):
                 query = self.language.expressions["dependencies"]["strict"]
             else:
                 query = self.language.expressions["dependencies"]["regular"]

@@ -45,7 +45,7 @@ def analyse(
     coverage_counter = 0
     ignored_counter = 0
 
-    # - 0.2 Initialise colorama
+    # - 0.2 Initialise colorama.
     colorama.init(autoreset=True)
 
     # 0. Initialise empty dependencies array.
@@ -60,15 +60,19 @@ def analyse(
             # 1.1.1. Traverse all available files.
             for file in files:
                 try:
+                    # 1.1.2. Check for supported language and size.
                     if os.stat(os.path.join(root, file)).st_size < max_file_size:
-                        if ((os.path.splitext(file)[0] not in ignored_files) and 
-                            (os.path.splitext(file)[1] not in ignored_extensions)):
+                        if (os.path.splitext(file)[0] not in ignored_files) and (
+                            os.path.splitext(file)[1] not in ignored_extensions
+                        ):
+                            # 1.1.3. Extract dependencies.
                             source_file = SourceFile(os.path.join(root, file))
                             dependencies.update(
                                 source_file.dependencies(verbose, strict)
                             )
                             coverage_counter += 1
                         else:
+                            ignored_counter += 1
                             raise TypeError
                     else:
                         raise MemoryError
@@ -91,9 +95,9 @@ def analyse(
                     print("[dextractor]", end=" ")
                     print(Fore.RED + "ERROR:", end=" ")
                     print(f"The file '{file}' could not be accessed.")
-            # 1.1.2 Update total file count.
+            # 1.1.4 Update total file count.
             total_file_count += len(files)
-        # 1.1.3. Extract statistics.
+        # 1.1.5. Extract statistics.
         if len(files) > 0 and coverage_counter > 0:
             print("[dextractor]", end=" ")
             print(Fore.GREEN + "SUCCESS:")
@@ -119,6 +123,20 @@ def analyse(
         try:
             source_file = SourceFile(any_path)
             dependencies.update(source_file.dependencies(verbose, strict))
+            # 1.1.2. Check for supported language and size.
+            if os.stat(any_path).st_size < max_file_size:
+                if (os.path.splitext(source_file)[0] not in ignored_files) and (
+                    os.path.splitext(source_file)[1] not in ignored_extensions
+                ):
+                    # 1.1.3. Extract dependencies.
+                    source_file = SourceFile(any_path)
+                    dependencies.update(source_file.dependencies(verbose, strict))
+                    coverage_counter += 1
+                else:
+                    ignored_counter += 1
+                    raise TypeError
+            else:
+                raise MemoryError
         except TypeError:
             if verbose:
                 print("[dextractor]", end=" ")
