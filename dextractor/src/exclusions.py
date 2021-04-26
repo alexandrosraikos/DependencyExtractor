@@ -54,5 +54,5 @@ ignored_extensions = [
     ".npy",
     ".npz",
     ".ini",
-    ".inc"
+    ".inc",
 ]

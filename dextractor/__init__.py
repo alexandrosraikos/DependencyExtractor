@@ -9,13 +9,14 @@
 import os
 from typing import Set
 
-# Third party deependencies.
+# Third party dependencies.
 import colorama
 from colorama import Fore
 
 # Local dependencies.
-from .expressions import known
-from .exclusions import ignored_files, ignored_extensions
+from .src.parser import SourceFile
+from .src.exclusions import ignored_files, ignored_extensions
+
 
 def analyse(
     any_path: str,
@@ -44,67 +45,8 @@ def analyse(
     coverage_counter = 0
     ignored_counter = 0
 
-    # - 0.2 Initialise colorama
+    # - 0.2 Initialise colorama.
     colorama.init(autoreset=True)
-
-    # - 0.3. Single file dependency analysis module.
-    def find_in(file_path: str) -> Set:
-        """
-        Read the source file and extract imported package names using regular expressions.
-        """
-        # 0. Initialize empty set of discovered dependencies.
-        found = set()
-        nonlocal coverage_counter
-        nonlocal ignored_counter
-        nonlocal strict
-        nonlocal verbose
-
-        # 1. When file is written in a supported language.
-        filename, extension = os.path.splitext(file_path)
-        if extension in known:
-            # 1.1. When file isn't too large.
-            # -----
-            # NOTE: Most source files for most use cases are not
-            #       expected to exceed 5MB in size (editable).
-            if os.stat(file_path).st_size < max_file_size:
-                try:
-                    # 1.1.1. Open file for reading.
-                    file = open(file_path, "r")
-                    if verbose:
-                        print("[dextractor]", end=" ")
-                        print(Fore.CYAN + "INFORMATION:", end=" ")
-                        print(f"Reading {os.path.basename(file.name)}")
-
-                    # 1.1.2. Match regex and obtain named capture group.
-                    if strict:
-                        query = known[extension + "-strict"]
-                    else:
-                        query = known[extension]
-                    matches = query.findall(file.read())
-                    found.update(matches)
-
-                    if not found and verbose:
-                        print("[dextractor]", end=" ")
-                        print(Fore.CYAN + "INFORMATION:", end=" ")
-                        print("This file doesn't include any dependencies.")
-                    # 1.1.3. Close file for memory optimisation.
-                    file.close()
-                except IOError:
-                    print("[dextractor]", end=" ")
-                    print(Fore.RED + "ERROR:", end=" ")
-                    print(
-                        f"There was an IO error when trying to access the file '{filename}'."
-                    )
-            else:
-                raise MemoryError()
-        elif os.path.basename(filename) in ignored_files or extension in ignored_extensions:
-            ignored_counter += 1
-            raise TypeError()
-        else:
-            raise NotImplementedError()
-        # 2. Increment directory coverage counter and return list of found dependencies.
-        coverage_counter += 1
-        return found
 
     # 0. Initialise empty dependencies array.
     dependencies = set()
@@ -118,12 +60,27 @@ def analyse(
             # 1.1.1. Traverse all available files.
             for file in files:
                 try:
-                    dependencies.update(find_in(os.path.join(root, file)))
+                    # 1.1.2. Check for supported language and size.
+                    if os.stat(os.path.join(root, file)).st_size < max_file_size:
+                        if (os.path.splitext(file)[0] not in ignored_files) and (
+                            os.path.splitext(file)[1] not in ignored_extensions
+                        ):
+                            # 1.1.3. Extract dependencies.
+                            source_file = SourceFile(os.path.join(root, file))
+                            dependencies.update(
+                                source_file.dependencies(verbose, strict)
+                            )
+                            coverage_counter += 1
+                        else:
+                            ignored_counter += 1
+                            raise TypeError
+                    else:
+                        raise MemoryError
                 except TypeError:
                     if verbose:
                         print("[dextractor]", end=" ")
                         print(Fore.YELLOW + "NOTICE:", end=" ")
-                        print(f"The file '{file}' is not a source file.")
+                        print(f"The file '{file}' does not contain source code.")
                 except NotImplementedError:
                     if verbose:
                         print("[dextractor]", end=" ")
@@ -137,12 +94,10 @@ def analyse(
                 except IOError:
                     print("[dextractor]", end=" ")
                     print(Fore.RED + "ERROR:", end=" ")
-                    print(
-                        f"The file '{file}' could not be accessed."
-                    )
-            # 1.1.2 Update total file count.
+                    print(f"The file '{file}' could not be accessed.")
+            # 1.1.4 Update total file count.
             total_file_count += len(files)
-        # 1.1.3. Extract statistics.
+        # 1.1.5. Extract statistics.
         if len(files) > 0 and coverage_counter > 0:
             print("[dextractor]", end=" ")
             print(Fore.GREEN + "SUCCESS:")
@@ -166,27 +121,50 @@ def analyse(
         #       running the script for a single file.
         filename, extension = os.path.splitext(any_path)
         try:
-            dependencies = dependencies.union(find_in(any_path))
+            source_file = SourceFile(any_path)
+            dependencies.update(source_file.dependencies(verbose, strict))
+            # 1.1.2. Check for supported language and size.
+            if os.stat(any_path).st_size < max_file_size:
+                if (os.path.splitext(source_file)[0] not in ignored_files) and (
+                    os.path.splitext(source_file)[1] not in ignored_extensions
+                ):
+                    # 1.1.3. Extract dependencies.
+                    source_file = SourceFile(any_path)
+                    dependencies.update(source_file.dependencies(verbose, strict))
+                    coverage_counter += 1
+                else:
+                    ignored_counter += 1
+                    raise TypeError
+            else:
+                raise MemoryError
         except TypeError:
-                if verbose:
-                    print("[dextractor]", end=" ")
-                    print(Fore.RED + "ERROR:", end=" ")
-                    print(f"The file '{os.path.basename(filename)}{extension}' is not a source file.")
+            if verbose:
+                print("[dextractor]", end=" ")
+                print(Fore.RED + "ERROR:", end=" ")
+                print(
+                    f"The file '{os.path.basename(filename)}{extension}' is not a source file."
+                )
         except NotImplementedError:
-                if verbose:
-                    print("[dextractor]", end=" ")
-                    print(Fore.YELLOW + "NOTICE:", end=" ")
-                    print(f"The file '{os.path.basename(filename)}{extension}' is not yet supported by this module.")
+            if verbose:
+                print("[dextractor]", end=" ")
+                print(Fore.YELLOW + "NOTICE:", end=" ")
+                print(
+                    f"The file '{os.path.basename(filename)}{extension}' is not yet supported by this module."
+                )
         except MemoryError:
-                if verbose:
-                    print("[dextractor]", end=" ")
-                    print(Fore.RED + "ERROR:", end=" ")
-                    print(f"The file '{os.path.basename(filename)}{extension}' is too large.")
+            if verbose:
+                print("[dextractor]", end=" ")
+                print(Fore.RED + "ERROR:", end=" ")
+                print(
+                    f"The file '{os.path.basename(filename)}{extension}' is too large."
+                )
         except IOError:
-                if verbose:
-                    print("[dextractor]", end=" ")
-                    print(Fore.RED + "ERROR:", end=" ")
-                    print(f"The file '{os.path.basename(filename)}{extension}' could not be accessed.")
+            if verbose:
+                print("[dextractor]", end=" ")
+                print(Fore.RED + "ERROR:", end=" ")
+                print(
+                    f"The file '{os.path.basename(filename)}{extension}' could not be accessed."
+                )
     else:
         raise Exception(
             "This is not a file or a directory. It might be a special file (e.g. socket, FIFO, device file), which is unsupported by this package. "
