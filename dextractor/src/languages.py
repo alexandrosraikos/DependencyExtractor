@@ -87,4 +87,15 @@ supported_languages = [
             }
         },
     ),
+    ProgrammingLanguage(
+        "JavaScript",
+        extensions=[".json"],
+        expressions={
+            "dependencies": {
+                "regular": re.compile(
+                    r"\"dependencies\":[ |]{(?:[\n| |\t]+\"(?P<dependency>[^_.][a-zA-Z0-9!@#$%^&*()_+\-\[\]{};'\"\\\/?]+)\":[ |][a-zA-Z0-9!@#$%^&*()_+\-\.,[\]{};'\"\\\/?]+)"
+                )
+            }
+        },
+    ),
 ]

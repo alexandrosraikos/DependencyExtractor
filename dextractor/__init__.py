@@ -62,8 +62,8 @@ def analyse(
                 try:
                     # 1.1.2. Check for supported language and size.
                     if os.stat(os.path.join(root, file)).st_size < max_file_size:
-                        if (os.path.splitext(file)[0] not in ignored_files) and (
-                            os.path.splitext(file)[1] not in ignored_extensions
+                        if ((os.path.splitext(file)[0] not in ignored_files) and (
+                            os.path.splitext(file)[1] not in ignored_extensions) or (os.path.splitext(file)[0]+os.path.splitext(file)[1] == "package.json")
                         ):
                             # 1.1.3. Extract dependencies.
                             source_file = SourceFile(os.path.join(root, file))
