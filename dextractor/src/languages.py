@@ -93,7 +93,7 @@ supported_languages = [
         expressions={
             "dependencies": {
                 "regular": re.compile(
-                    r"\"dependencies\":[ |]{(?:[\n| |\t]+\"(?P<dependency>[^_.][a-zA-Z0-9!@#$%^&*()_+\-\[\]{};'\"\\\/?]+)\":[ |][a-zA-Z0-9!@#$%^&*()_+\-\.,[\]{};'\"\\\/?]+)"
+                    r"(?:\"dependencies\":[ |]{(?:[\s|]+\"(?P<dependency>.*?)\":[ |]\".*?\"[,|\s|}|])+[\s]+}[\s|,|]+)"
                 )
             }
         },
