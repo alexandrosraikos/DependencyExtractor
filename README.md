@@ -54,3 +54,4 @@ All languages which are supported are still in alpha. Regular expressions which 
 1. Go
 1. Python (_duh!_)
 1. Java
+1. JavaScript
