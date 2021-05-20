@@ -15,10 +15,11 @@ from typing import List
 
 
 class ProgrammingLanguage:
-    def __init__(self, name, extensions, expressions):
+    def __init__(self, name, extensions, expressions, supports_grouped_dependencies):
         self.name: str = name
         self.extensions: List[str] = extensions
         self.expressions = expressions
+        self.supports_grouped_dependencies = supports_grouped_dependencies
 
 
 supported_languages = [
@@ -35,6 +36,7 @@ supported_languages = [
                 ),
             }
         },
+        supports_grouped_dependencies = False
     ),
     ProgrammingLanguage(
         "C",
@@ -49,6 +51,7 @@ supported_languages = [
                 ),
             }
         },
+        supports_grouped_dependencies = False
     ),
     # TODO: #1 Needs improvement (it only reads last dependency in list + strict mode.)
     ProgrammingLanguage(
@@ -56,11 +59,15 @@ supported_languages = [
         extensions=[".go"],
         expressions={
             "dependencies": {
-                "regular": re.compile(
-                    r"import \(\n(?:\t\"(?P<dependency>[a-zA-Z0-9!@#$%^&*()_+\-\[\]{};':\"\\.\/?]+)\"[\n]+)+\)"
+                "container": re.compile(
+                    r"import[\s]+\((?P<list>[a-zA-Z0-9!@#$%^&*_+\-\[\]{};':\"\s\\.\/?]+)\)"
+                ),
+                "internal": re.compile(
+                    r"[\s]+\"(?P<dependency>.*)\""
                 )
             }
         },
+        supports_grouped_dependencies = True
     ),
     ProgrammingLanguage(
         "Java",
@@ -72,6 +79,7 @@ supported_languages = [
                 )
             }
         },
+        supports_grouped_dependencies = False
     ),
     ProgrammingLanguage(
         "Python",
@@ -86,16 +94,21 @@ supported_languages = [
                 ),
             }
         },
+        supports_grouped_dependencies = False
     ),
     ProgrammingLanguage(
         "JavaScript",
         extensions=[".json"],
         expressions={
             "dependencies": {
-                "regular": re.compile(
-                    r"(?:\"dependencies\":[ |]{(?:[\s|]+\"(?P<dependency>.*?)\":[ |]\".*?\"[,|\s|}|])+[\s]+}[\s|,|]+)"
+                "container": re.compile(
+                    r"\"dependencies\":[ |]{(?P<list>[a-zA-Z0-9!@#$%^&*_+\-\[,\];':\"\s\\.\/?]+)"
+                ),
+                "internal": re.compile(
+                    r"[\s]+\"(?P<dependency>.*)\":"
                 )
             }
         },
+        supports_grouped_dependencies = True
     ),
 ]

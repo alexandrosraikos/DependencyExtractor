@@ -63,13 +63,14 @@ class SourceFile:
                 print(f"Reading {os.path.basename(file.name)}")
 
             # 1.1.2. Match regex and obtain named capture group.
-            if strict and (
-                "strict" in self.language.expressions["dependencies"].keys()
-            ):
-                query = self.language.expressions["dependencies"]["strict"]
+            if self.language.supports_grouped_dependencies:
+                containerQuery = self.language.expressions["dependencies"]["container"]
+                grouped = containerQuery.findall(file.read())
+                query = self.language.expressions["dependencies"]["internal"]
+                matches = query.findall(grouped[0])
             else:
                 query = self.language.expressions["dependencies"]["regular"]
-            matches = query.findall(file.read())
+                matches = query.findall(file.read())
             found.update(matches)
 
             if not found and verbose:
