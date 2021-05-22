@@ -66,12 +66,14 @@ class SourceFile:
             if self.language.supports_grouped_dependencies:
                 containerQuery = self.language.expressions["dependencies"]["container"]
                 grouped = containerQuery.findall(file.read())
-                query = self.language.expressions["dependencies"]["internal"]
-                matches = query.findall(grouped[0])
+                if grouped:
+                    query = self.language.expressions["dependencies"]["internal"]
+                    matches = query.findall(grouped[0])
             else:
                 query = self.language.expressions["dependencies"]["regular"]
                 matches = query.findall(file.read())
-            found.update(matches)
+            if "matches" in locals():
+                found.update(matches)
 
             if not found and verbose:
                 print("[dextractor]", end=" ")

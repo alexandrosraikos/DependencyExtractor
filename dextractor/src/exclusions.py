@@ -5,10 +5,19 @@
 # Licensed under the MIT License.
 # ---------
 #
-# Define a list of file extensions and names to be ignored.
+# Define a list of known configuration files, file extensions and names to be ignored.
+
+configuration_files = [
+    "Dockerfile",
+    "Makefile",
+    "docker-compose.yml",
+    "serverless.yaml",
+    "serverless.yml"
+]
 
 ignored_files = [
     ".gitignore",
+    ".DS_Store",
     "README",
     "LICENSE",
     "MAINTAINERS",
@@ -17,8 +26,6 @@ ignored_files = [
     "CONTRIBUTORS",
     "AUTHORS",
     "PATENTS",
-    "Dockerfile",
-    "Makefile",
 ]
 
 ignored_extensions = [
