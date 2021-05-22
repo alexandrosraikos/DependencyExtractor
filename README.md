@@ -2,6 +2,8 @@
 
 A Python library which extracts library dependencies from source files written in most mainstream programming languages.
 
+** :warning: Warning: This library is not meant for production use, as extended testing has not been carried out yet.**
+
 ## Getting started
 
 Follow the steps below to get started with `dextractor`.
