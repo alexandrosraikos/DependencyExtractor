@@ -44,7 +44,7 @@ result = analyse("path/to/file/or/directory", verbose=True)
 # Then you can access the following keys:
 # --
 dependencies = result["dependencies"]
-configurations = result["configurations]
+configurations = result["configurations"]
 
 
 ```
