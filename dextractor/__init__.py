@@ -117,7 +117,7 @@ def analyse(
             # 1.1.4 Update total file count.
             total_file_count += len(files)
         # 1.1.5. Extract statistics.
-        if len(files) > 0 and coverage_counter > 0:
+        if verbose and len(files) > 0 and coverage_counter > 0:
             print("[dextractor]", end=" ")
             print(Fore.GREEN + "SUCCESS:")
             print(

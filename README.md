@@ -39,7 +39,7 @@ result = analyse("path/to/file/or/directory", max_file_size=2000000) # <- 2MB
 # Ignore local and relative dependencies.
 result = analyse("path/to/file/or/directory", strict=True)
 
-# Enable verbose output.
+# Enable verbose output. NOTE: Do not enable on parallel analyses.
 result = analyse("path/to/file/or/directory", verbose=True)
 
 #
